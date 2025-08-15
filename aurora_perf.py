@@ -6,8 +6,6 @@ Tests read-modify-write operations on vehicle data with real-time metrics.
 
 import asyncio
 import asyncpg
-import base64
-import json
 import os
 import random
 import string
@@ -117,7 +115,7 @@ class AuroraPerformanceTester:
                         country CHAR(2) NOT NULL,
                         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
                         updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-                        entries_compressed TEXT NOT NULL,
+                        entries_compressed BYTEA NOT NULL,
                         is_fleet_vehicle BOOLEAN DEFAULT false
                     )
                 """)
@@ -162,8 +160,7 @@ class AuroraPerformanceTester:
                 country = random.choice(self.countries)
                 
                 # Generate random binary blob for telemetry data
-                entries_base64 = base64.b64encode(os.urandom(1024)).decode('ascii')
-                compressed_data = entries_base64
+                compressed_data = os.urandom(1024)
                 is_fleet = random.choice([True, False])
                 
                 batch_data.append((vin, brand, country, compressed_data, is_fleet))
@@ -194,11 +191,11 @@ class AuroraPerformanceTester:
         async with self.pool.acquire() as conn:
             return await conn.fetchval(f"SELECT vin FROM {self.config.table_name} ORDER BY RANDOM() LIMIT 1")
     
-    def modify_vehicle_data(self, original_data: str, brand: str, vin: str) -> str:
+    def modify_vehicle_data(self, original_data: bytes, brand: str, vin: str) -> bytes:
         """Generate new random binary blob for vehicle telemetry data."""
         # Since we now use random binary blobs instead of structured data,
         # we simply generate a new random blob rather than modifying existing data
-        return base64.b64encode(os.urandom(1024)).decode('ascii')
+        return os.urandom(1024)
     
     async def perform_operation(self, worker_id: int) -> TestResult:
         """Perform a single read-modify-write operation."""
