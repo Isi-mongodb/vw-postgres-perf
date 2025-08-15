@@ -8,6 +8,7 @@ import asyncio
 import asyncpg
 import base64
 import json
+import os
 import random
 import string
 import time
@@ -160,17 +161,9 @@ class AuroraPerformanceTester:
                 brand = random.choice(self.brands)
                 country = random.choice(self.countries)
                 
-                # Create realistic telemetry data
-                telemetry = {
-                    "vin": vin,
-                    "brand": brand,
-                    "telemetry": f"Vehicle telemetry data for {vin}",
-                    "diagnostics": f"Diagnostic info {random.randint(1000, 9999)}",
-                    "sensors": [f"sensor_{k}" for k in range(random.randint(5, 15))],
-                    "readings": [random.uniform(0, 100) for _ in range(random.randint(10, 50))]
-                }
-                
-                compressed_data = base64.b64encode(json.dumps(telemetry).encode()).decode()
+                # Generate random binary blob for telemetry data
+                entries_base64 = base64.b64encode(os.urandom(1024)).decode('ascii')
+                compressed_data = entries_base64
                 is_fleet = random.choice([True, False])
                 
                 batch_data.append((vin, brand, country, compressed_data, is_fleet))
@@ -202,37 +195,10 @@ class AuroraPerformanceTester:
             return await conn.fetchval(f"SELECT vin FROM {self.config.table_name} ORDER BY RANDOM() LIMIT 1")
     
     def modify_vehicle_data(self, original_data: str, brand: str, vin: str) -> str:
-        """Modify vehicle telemetry data realistically."""
-        try:
-            # Decode existing data
-            decoded = base64.b64decode(original_data.encode()).decode()
-            vehicle_data = json.loads(decoded)
-            
-            # Realistic modifications
-            if 'telemetry' in vehicle_data:
-                vehicle_data['telemetry'] += f" [UPDATE-{random.randint(1000, 9999)}]"
-            
-            if 'readings' in vehicle_data:
-                vehicle_data['readings'].extend([random.uniform(0, 100) for _ in range(random.randint(1, 5))])
-            
-            if 'diagnostics' in vehicle_data:
-                vehicle_data['diagnostics'] = f"Updated diagnostics for {vin} at {time.time():.0f}"
-            
-            vehicle_data['last_modified'] = time.time()
-            
-            # Re-encode
-            return base64.b64encode(json.dumps(vehicle_data).encode()).decode()
-            
-        except Exception:
-            # Fallback: create new data
-            new_data = {
-                "vin": vin,
-                "brand": brand,
-                "telemetry": f"New telemetry for {vin}",
-                "diagnostics": f"Fresh diagnostics {random.randint(10000, 99999)}",
-                "created_at": time.time()
-            }
-            return base64.b64encode(json.dumps(new_data).encode()).decode()
+        """Generate new random binary blob for vehicle telemetry data."""
+        # Since we now use random binary blobs instead of structured data,
+        # we simply generate a new random blob rather than modifying existing data
+        return base64.b64encode(os.urandom(1024)).decode('ascii')
     
     async def perform_operation(self, worker_id: int) -> TestResult:
         """Perform a single read-modify-write operation."""
