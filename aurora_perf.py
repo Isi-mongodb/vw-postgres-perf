@@ -34,7 +34,7 @@ class TestConfig:
     table_name: str = "vehicles"
     
     # Data settings
-    initial_records: int = 10000
+    initial_records: int = 10000000
     recreate_table: bool = False
 
 
@@ -377,7 +377,7 @@ async def main():
     parser.add_argument("--duration", type=int, default=60, help="Test duration in seconds")
     parser.add_argument("--pool-size", type=int, default=50, help="Connection pool size")
     parser.add_argument("--table-name", default="vehicles", help="Table name")
-    parser.add_argument("--initial-records", type=int, default=10000, help="Initial records to create")
+    parser.add_argument("--initial-records", type=int, default=10000000, help="Initial records to create")
     parser.add_argument("--recreate-table", action="store_true", help="Drop and recreate table if it exists")
     
     args = parser.parse_args()
