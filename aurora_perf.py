@@ -6,6 +6,7 @@ Tests read-modify-write operations on vehicle data with real-time metrics.
 
 import asyncio
 import asyncpg
+import base64
 import os
 import random
 import string
@@ -160,7 +161,7 @@ class AuroraPerformanceTester:
                 country = random.choice(self.countries)
                 
                 # Generate random binary blob for telemetry data
-                compressed_data = os.urandom(1024)
+                compressed_data = base64.b64encode(os.urandom(1024)).decode('ascii')
                 is_fleet = random.choice([True, False])
                 
                 batch_data.append((vin, brand, country, compressed_data, is_fleet))
@@ -195,7 +196,7 @@ class AuroraPerformanceTester:
         """Generate new random binary blob for vehicle telemetry data."""
         # Since we now use random binary blobs instead of structured data,
         # we simply generate a new random blob rather than modifying existing data
-        return os.urandom(1024)
+        return base64.b64encode(os.urandom(1024)).decode('ascii')
     
     async def perform_operation(self, worker_id: int) -> TestResult:
         """Perform a single read-modify-write operation."""
@@ -229,6 +230,7 @@ class AuroraPerformanceTester:
                 return TestResult(True, time.time() - start_time, start_time, worker_id)
                 
         except Exception as e:
+            print(f"Worker {worker_id} error: {e}")
             return TestResult(False, time.time() - start_time, start_time, worker_id)
     
     async def worker(self, worker_id: int):
